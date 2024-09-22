@@ -73,6 +73,7 @@
 #include "tests/texture_format_tests.h"
 #include "tests/texture_framebuffer_blit_tests.h"
 #include "tests/texture_matrix_tests.h"
+#include "tests/texture_perspective_tests.h"
 #include "tests/texture_render_target_tests.h"
 #include "tests/texture_render_update_in_place_tests.h"
 #include "tests/texture_shadow_comparator_tests.h"
@@ -629,6 +630,10 @@ static void register_suites(TestHost& host, std::vector<std::shared_ptr<TestSuit
   }
   {
     auto suite = std::make_shared<TextureMatrixTests>(host, output_directory);
+    test_suites.push_back(suite);
+  }
+  {
+    auto suite = std::make_shared<TexturePerspectiveTests>(host, output_directory);
     test_suites.push_back(suite);
   }
   {

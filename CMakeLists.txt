@@ -344,6 +344,8 @@ add_executable(
         src/tests/texture_framebuffer_blit_tests.h
         src/tests/texture_matrix_tests.cpp
         src/tests/texture_matrix_tests.h
+        src/tests/texture_perspective_tests.cpp
+        src/tests/texture_perspective_tests.h
         src/tests/texture_render_target_tests.cpp
         src/tests/texture_render_target_tests.h
         src/tests/texture_render_update_in_place_tests.cpp
