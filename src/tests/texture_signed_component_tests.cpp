@@ -167,6 +167,10 @@ void TextureSignedComponentTests::TestGradients(const std::string &name, const T
     host_.SetTexCoord0(0.0f, 1.0f);
     host_.SetVertex(left, bottom, 1.0f);
     host_.End();
+
+    while (pb_busy()) {
+      /* Wait for completion... */
+    }
   };
 
   const float h_start = floorf(static_cast<float>(host_.GetFramebufferWidth() % kTextureSize) * 0.5f);
