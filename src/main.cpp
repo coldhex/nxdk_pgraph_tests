@@ -34,6 +34,8 @@
 #include "tests/attribute_explicit_setter_tests.h"
 #include "tests/attribute_float_tests.h"
 #include "tests/blend_tests.h"
+#include "tests/bump_map_tests.h"
+#include "tests/bump_env_lum_tests.h"
 #include "tests/clear_tests.h"
 #include "tests/color_key_tests.h"
 #include "tests/color_mask_blend_tests.h"
@@ -466,6 +468,14 @@ static void register_suites(TestHost& host, std::vector<std::shared_ptr<TestSuit
   }
   {
     auto suite = std::make_shared<BlendTests>(host, output_directory);
+    test_suites.push_back(suite);
+  }
+  {
+    auto suite = std::make_shared<BumpMapTests>(host, output_directory);
+    test_suites.push_back(suite);
+  }
+  {
+    auto suite = std::make_shared<BumpEnvLumTests>(host, output_directory);
     test_suites.push_back(suite);
   }
   {

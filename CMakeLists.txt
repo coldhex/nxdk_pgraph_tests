@@ -264,6 +264,10 @@ add_executable(
         src/tests/attribute_float_tests.h
         src/tests/blend_tests.cpp
         src/tests/blend_tests.h
+        src/tests/bump_map_tests.cpp
+        src/tests/bump_map_tests.h
+        src/tests/bump_env_lum_tests.cpp
+        src/tests/bump_env_lum_tests.h
         src/tests/clear_tests.cpp
         src/tests/clear_tests.h
         src/tests/color_key_tests.cpp

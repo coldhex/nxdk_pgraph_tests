@@ -19,6 +19,8 @@ constexpr TextureFormatInfo kTextureFormats[] = {
     {SDL_PIXELFORMAT_ARGB1555, NV097_SET_TEXTURE_FORMAT_COLOR_SZ_A1R5G5B5, 16, true, false, false, "A1R5G5B5"},
     {SDL_PIXELFORMAT_ARGB1555, NV097_SET_TEXTURE_FORMAT_COLOR_SZ_X1R5G5B5, 16, true, false, false, "X1R5G5B5"},
     {SDL_PIXELFORMAT_ARGB4444, NV097_SET_TEXTURE_FORMAT_COLOR_SZ_A4R4G4B4, 16, true, false, false, "A4R4G4B4"},
+    {SDL_PIXELFORMAT_RGBA8888, NV097_SET_TEXTURE_FORMAT_COLOR_SZ_R16B16, 32, true, false, true, "R16B16"},
+    {SDL_PIXELFORMAT_RGBA8888, NV097_SET_TEXTURE_FORMAT_COLOR_SZ_Y16, 16, true, false, true, "Y16"},
 
     // linear unsigned
     {SDL_PIXELFORMAT_ABGR8888, NV097_SET_TEXTURE_FORMAT_COLOR_LU_IMAGE_A8B8G8R8, 32, false, true, false, "A8B8G8R8"},
@@ -40,6 +42,7 @@ constexpr TextureFormatInfo kTextureFormats[] = {
     {SDL_PIXELFORMAT_RGBA8888, NV097_SET_TEXTURE_FORMAT_COLOR_LU_IMAGE_DEPTH_Y16_FLOAT, 16, false, true, true,
      "D_Y16_FLOAT"},
     {SDL_PIXELFORMAT_RGBA8888, NV097_SET_TEXTURE_FORMAT_COLOR_LU_IMAGE_Y16, 16, false, true, true, "Y16"},
+    {SDL_PIXELFORMAT_RGBA8888, NV097_SET_TEXTURE_FORMAT_COLOR_LU_IMAGE_R16B16, 32, false, true, true, "R16B16"},
 
     // yuv color space
     // Each 4 bytes represent the color for 2 neighboring pixels:

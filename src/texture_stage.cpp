@@ -109,10 +109,10 @@ void TextureStage::Commit(uint32_t memory_dma_offset, uint32_t palette_dma_offse
 
   p = pb_push1(p, NV097_SET_TEXTURE_BORDER_COLOR, border_color_);
 
-  p = pb_push4f(p, NV097_SET_TEXTURE_SET_BUMP_ENV_MAT, bump_env_material[0], bump_env_material[1], bump_env_material[2],
-                bump_env_material[3]);
-  p = pb_push1f(p, NV097_SET_TEXTURE_SET_BUMP_ENV_SCALE, bump_env_scale);
-  p = pb_push1f(p, NV097_SET_TEXTURE_SET_BUMP_ENV_OFFSET, bump_env_offset);
+  p = pb_push4f(p, NV097_SET_TEXTURE_SET_BUMP_ENV_MAT + (64 * stage_), bump_env_material[0], bump_env_material[2],
+		bump_env_material[3], bump_env_material[1]);
+  p = pb_push1f(p, NV097_SET_TEXTURE_SET_BUMP_ENV_SCALE + (64 * stage_), bump_env_scale);
+  p = pb_push1f(p, NV097_SET_TEXTURE_SET_BUMP_ENV_OFFSET + (64 * stage_), bump_env_offset);
   p = pb_push1(p, NV097_SET_TEXTURE_MATRIX_ENABLE + (4 * stage_), texture_matrix_enable_);
   if (texture_matrix_enable_) {
     p = pb_push_4x4_matrix(p, NV097_SET_TEXTURE_MATRIX + 64 * stage_, texture_matrix_[0]);
@@ -236,10 +236,18 @@ int TextureStage::SetTexture(const SDL_Surface *surface, uint8_t *memory_base) c
         }
       } break;
 
+      case NV097_SET_TEXTURE_FORMAT_COLOR_SZ_Y16:
       case NV097_SET_TEXTURE_FORMAT_COLOR_LU_IMAGE_Y16:
       case NV097_SET_TEXTURE_FORMAT_COLOR_LU_IMAGE_DEPTH_Y16_FIXED: {
         // Treat the source as a 32-bit depth value and remap to 16 bit.
         uint32_t *source = pixels;
+	if (format_.xbox_swizzled) {
+	  swizzle_bpp = 2;
+	  swizzle_pitch = swizzle_w * swizzle_bpp;
+	  converted = new uint8_t[swizzle_pitch * swizzle_h * swizzle_depth];
+	  dest = converted;
+	}
+
         for (int y = 0; y < surface->h; ++y) {
           for (int x = 0; x < surface->w; ++x, ++source) {
             uint8_t red, green, blue;
@@ -310,6 +318,28 @@ int TextureStage::SetTexture(const SDL_Surface *surface, uint8_t *memory_base) c
             uint8_t red, green, blue, alpha;
             SDL_GetRGBA(*source, surface->format, &red, &green, &blue, &alpha);
             *dest++ = blue;
+            *dest++ = red;
+          }
+        }
+      } break;
+
+      case NV097_SET_TEXTURE_FORMAT_COLOR_LU_IMAGE_R16B16:
+      case NV097_SET_TEXTURE_FORMAT_COLOR_SZ_R16B16: {
+        uint32_t *source = pixels;
+	if (format_.xbox_swizzled) {
+	  swizzle_bpp = 4;
+	  swizzle_pitch = swizzle_w * swizzle_bpp;
+	  converted = new uint8_t[swizzle_pitch * swizzle_h * swizzle_depth];
+	  dest = converted;
+	}
+
+        for (int y = 0; y < surface->h; ++y) {
+          for (int x = 0; x < surface->w; ++x, ++source) {
+            uint8_t red, green, blue, alpha;
+            SDL_GetRGBA(*source, surface->format, &red, &green, &blue, &alpha);
+            *dest++ = blue;
+            *dest++ = blue;
+            *dest++ = red;
             *dest++ = red;
           }
         }
