@@ -69,6 +69,7 @@
 #include "tests/texgen_matrix_tests.h"
 #include "tests/texgen_tests.h"
 #include "tests/texture_border_tests.h"
+#include "tests/texture_brdf_tests.h"
 #include "tests/texture_cpu_update_tests.h"
 #include "tests/texture_cubemap_tests.h"
 #include "tests/texture_format_dxt_tests.h"
@@ -608,6 +609,10 @@ static void register_suites(TestHost& host, std::vector<std::shared_ptr<TestSuit
   }
   {
     auto suite = std::make_shared<TextureBorderTests>(host, output_directory);
+    test_suites.push_back(suite);
+  }
+  {
+    auto suite = std::make_shared<TextureBRDFTests>(host, output_directory);
     test_suites.push_back(suite);
   }
   {

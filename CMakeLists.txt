@@ -336,6 +336,8 @@ add_executable(
         src/tests/texgen_tests.h
         src/tests/texture_border_tests.cpp
         src/tests/texture_border_tests.h
+        src/tests/texture_brdf_tests.cpp
+        src/tests/texture_brdf_tests.h
         src/tests/texture_cpu_update_tests.cpp
         src/tests/texture_cpu_update_tests.h
         src/tests/texture_cubemap_tests.cpp
