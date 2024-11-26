@@ -5,6 +5,9 @@
 
 #include "test_suite.h"
 #include "texture_format.h"
+#include "xbox_math_vector.h"
+
+using namespace XboxMath;
 
 class TestHost;
 
@@ -18,6 +21,7 @@ class TextureCubemapTests : public TestSuite {
  private:
   void TestCubemap();
   void TestDotSTRCubemap(const std::string &name, uint32_t dot_rgb_mapping);
+  void TestDotReflectSpec(const std::string &name, uint32_t dot_rgb_mapping, const vector_t &eye_vec, bool const_eye);
 };
 
 #endif  // NXDK_PGRAPH_TESTS_TEXTURE_CUBEMAP_TESTS_H

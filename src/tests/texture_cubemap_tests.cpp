@@ -9,13 +9,12 @@
 
 #include "debug_output.h"
 #include "shaders/perspective_vertex_shader.h"
+#include "swizzle.h"
 #include "test_host.h"
 #include "texture_format.h"
 #include "texture_generator.h"
 #include "xbox_math_matrix.h"
 #include "xbox_math_types.h"
-
-using namespace XboxMath;
 
 static constexpr float kSize = 1.0f;
 
@@ -83,12 +82,30 @@ static const DotSTRTest kDotSTRTests[] = {
     {"DotSTRCube_HiLoHemi", 0x777},
 };
 
+static const DotSTRTest kDotReflectSpecTests[] = {
+    {"0to1", 0x000}, {"-1to1D3D", 0x111}, {"-1to1GL", 0x222}, {"-1to1", 0x333}, {"HiLo_1", 0x444}, {"HiLoHemi", 0x777},
+};
+
 TextureCubemapTests::TextureCubemapTests(TestHost &host, std::string output_dir)
     : TestSuite(host, std::move(output_dir), "Texture cubemap") {
   tests_[kCubemapTest] = [this]() { TestCubemap(); };
 
   for (auto &test : kDotSTRTests) {
     tests_[test.name] = [this, &test] { TestDotSTRCubemap(test.name, test.dot_rgbmapping); };
+  }
+
+  for (auto const_eye : {false, true}) {
+    for (auto &test : kDotReflectSpecTests) {
+      for (int eye_comp : {0, 1, 2}) {
+        vector_t eye_vec = {0.0f, 0.0f, 0.0f};
+        eye_vec[eye_comp] = 1.0f;
+        std::string test_name = std::string(const_eye ? "DotReflectConst_" : "DotReflectSpec_") +
+                                std::to_string(eye_comp) + "_" + test.name;
+        tests_[test_name] = [this, test_name, &test, eye_vec, const_eye] {
+          TestDotReflectSpec(test_name, test.dot_rgbmapping, eye_vec, const_eye);
+        };
+      }
+    }
   }
 }
 
@@ -283,6 +300,88 @@ void TextureCubemapTests::TestDotSTRCubemap(const std::string &name, uint32_t do
         host_.SetTexCoord1(inv_projection[0][0], inv_projection[0][1], inv_projection[0][2], 1);
         host_.SetTexCoord2(inv_projection[1][0], inv_projection[1][1], inv_projection[1][2], 0);
         host_.SetTexCoord3(inv_projection[2][0], inv_projection[2][1], inv_projection[2][2], 0);
+        host_.SetVertex(vertex[0], vertex[1], vertex[2], 1.0f);
+      }
+    }
+
+    host_.End();
+  };
+
+  const float z = 2.0f;
+  draw(-1.5f, 0.0f, z, M_PI * 0.25f, M_PI * 0.25f, 0.0f);
+  draw(1.5f, 0.0f, z, M_PI * 1.25f, M_PI * 0.25f, 0.0f);
+
+  p = pb_begin();
+  p = pb_push1(p, NV097_SET_DOT_RGBMAPPING, 0);
+  pb_end(p);
+
+  pb_print("%s\n", name.c_str());
+  pb_draw_text_screen();
+
+  host_.FinishDraw(allow_saving_, output_dir_, name);
+}
+
+void TextureCubemapTests::TestDotReflectSpec(const std::string &name, uint32_t dot_rgb_mapping, const vector_t &eye_vec,
+                                             bool const_eye) {
+  auto shader = std::static_pointer_cast<PerspectiveVertexShader>(host_.GetShaderProgram());
+
+  host_.SetTextureStageEnabled(0, true);
+  host_.SetTextureStageEnabled(1, true);
+  host_.SetTextureStageEnabled(2, true);
+  host_.SetTextureStageEnabled(3, true);
+  host_.SetShaderStageProgram(
+      TestHost::STAGE_2D_PROJECTIVE, TestHost::STAGE_DOT_PRODUCT, TestHost::STAGE_DOT_PRODUCT,
+      const_eye ? TestHost::STAGE_DOT_REFLECT_SPECULAR_CONST : TestHost::STAGE_DOT_REFLECT_SPECULAR);
+  host_.SetupTextureStages();
+
+  auto p = pb_begin();
+  p = pb_push1(p, NV097_SET_DOT_RGBMAPPING, dot_rgb_mapping);
+  if (const_eye) {
+    p = pb_push3f(p, NV097_SET_EYE_VECTOR, eye_vec[0], eye_vec[1], eye_vec[2]);
+  } else {
+    p = pb_push3f(p, NV097_SET_EYE_VECTOR, 0.0f, 0.0f, 0.0f);
+  }
+  pb_end(p);
+
+  host_.PrepareDraw(0xFE131313);
+
+  auto draw = [this, &shader, eye_vec, const_eye](float x, float y, float z, float r_x, float r_y, float r_z) {
+    matrix4_t matrix;
+    vector_t eye{0.0f, 0.0f, -7.0f, 1.0f};
+    vector_t at{0.0f, 0.0f, 0.0f, 1.0f};
+    vector_t up{0.0f, 1.0f, 0.0f, 1.0f};
+    TestHost::BuildD3DModelViewMatrix(matrix, eye, at, up);
+
+    auto &model_matrix = shader->GetModelMatrix();
+    MatrixSetIdentity(model_matrix);
+    vector_t rotation = {r_x, r_y, r_z};
+    MatrixRotate(model_matrix, rotation);
+    vector_t translation = {x, y, z};
+    MatrixTranslate(model_matrix, translation);
+
+    matrix4_t mv_matrix;
+    MatrixMultMatrix(model_matrix, matrix, mv_matrix);
+    host_.SetFixedFunctionModelViewMatrix(mv_matrix);
+
+    auto inv_projection = host_.GetFixedFunctionInverseCompositeMatrix();
+    shader->PrepareDraw();
+
+    host_.Begin(TestHost::PRIMITIVE_QUADS);
+
+    uint32_t face_index = 0;
+    for (auto face : kCubeFaces) {
+      const auto normals = kCubeSTPoints[face_index++];
+      for (auto i = 0; i < 4; ++i) {
+        uint32_t index = face[i];
+        const float *vertex = kCubePoints[index];
+        const float *normal_st = normals[i];
+        host_.SetTexCoord0(normal_st[0], normal_st[1]);
+        host_.SetTexCoord1(inv_projection[0][0], inv_projection[0][1], inv_projection[0][2],
+                           const_eye ? 1.0f : eye_vec[0]);
+        host_.SetTexCoord2(inv_projection[1][0], inv_projection[1][1], inv_projection[1][2],
+                           const_eye ? 1.0f : eye_vec[1]);
+        host_.SetTexCoord3(inv_projection[2][0], inv_projection[2][1], inv_projection[2][2],
+                           const_eye ? 1.0f : eye_vec[2]);
         host_.SetVertex(vertex[0], vertex[1], vertex[2], 1.0f);
       }
     }
