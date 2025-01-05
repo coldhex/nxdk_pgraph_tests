@@ -42,6 +42,7 @@
 #include "tests/color_zeta_disable_tests.h"
 #include "tests/color_zeta_overlap_tests.h"
 #include "tests/combiner_tests.h"
+#include "tests/depth_clamp_tests.h"
 #include "tests/depth_format_fixed_function_tests.h"
 #include "tests/depth_format_tests.h"
 #include "tests/dma_corruption_around_surface_tests.h"
@@ -501,6 +502,10 @@ static void register_suites(TestHost& host, std::vector<std::shared_ptr<TestSuit
   }
   {
     auto suite = std::make_shared<CombinerTests>(host, output_directory);
+    test_suites.push_back(suite);
+  }
+  {
+    auto suite = std::make_shared<DepthClampTests>(host, output_directory);
     test_suites.push_back(suite);
   }
   {

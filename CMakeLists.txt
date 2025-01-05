@@ -280,6 +280,8 @@ add_executable(
         src/tests/color_zeta_overlap_tests.h
         src/tests/combiner_tests.cpp
         src/tests/combiner_tests.h
+        src/tests/depth_clamp_tests.cpp
+        src/tests/depth_clamp_tests.h
         src/tests/depth_format_fixed_function_tests.cpp
         src/tests/depth_format_fixed_function_tests.h
         src/tests/depth_format_tests.cpp
