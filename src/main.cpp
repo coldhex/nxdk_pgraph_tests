@@ -37,6 +37,7 @@
 #include "tests/bump_map_tests.h"
 #include "tests/bump_env_lum_tests.h"
 #include "tests/clear_tests.h"
+#include "tests/clipping_precision_tests.h"
 #include "tests/color_key_tests.h"
 #include "tests/color_mask_blend_tests.h"
 #include "tests/color_zeta_disable_tests.h"
@@ -482,6 +483,10 @@ static void register_suites(TestHost& host, std::vector<std::shared_ptr<TestSuit
   }
   {
     auto suite = std::make_shared<ClearTests>(host, output_directory);
+    test_suites.push_back(suite);
+  }
+  {
+    auto suite = std::make_shared<ClippingPrecisionTests>(host, output_directory);
     test_suites.push_back(suite);
   }
   {

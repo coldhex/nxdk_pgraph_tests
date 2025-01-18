@@ -270,6 +270,8 @@ add_executable(
         src/tests/bump_env_lum_tests.h
         src/tests/clear_tests.cpp
         src/tests/clear_tests.h
+        src/tests/clipping_precision_tests.cpp
+        src/tests/clipping_precision_tests.h
         src/tests/color_key_tests.cpp
         src/tests/color_key_tests.h
         src/tests/color_mask_blend_tests.cpp
