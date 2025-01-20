@@ -4,6 +4,7 @@
 
 #include "../test_host.h"
 #include "debug_output.h"
+#include "shaders/perspective_vertex_shader.h"
 #include "texture_generator.h"
 #include "vertex_buffer.h"
 
@@ -12,9 +13,10 @@ static constexpr const char kTestEqualDepth[] = "depth_equal";
 static constexpr float kZBias = -500000.0f;
 static constexpr float kWBufferZBias = -5.0f;
 
-static std::string MakeTestName(bool w_buffered, bool clamp, bool zbias, bool full_range) {
-  return std::string(kTestDepthClamp) + (w_buffered ? "_WBuf" : "") + (clamp ? "_Clamp" : "") +
-    (zbias ? "_ZBias" : "") + (full_range ? "_FullR" : "");
+static std::string MakeTestName(bool w_buffered, bool clamp, bool zbias, bool full_range, bool vsh) {
+  return std::string(kTestDepthClamp) + "_W" + (w_buffered ? "1" : "0") +
+    "_C" + (clamp ? "1" : "0") + "_ZB" + (zbias ? "1" : "0") +
+    "_FR" + (full_range ? "1" : "0") + "_VSH" + (vsh ? "1" : "0");
 }
 
 static std::string MakeEqualDepthTestName(bool w_buffered, float ofs) {
@@ -27,10 +29,12 @@ DepthClampTests::DepthClampTests(TestHost &host, std::string output_dir) : TestS
   for (auto w_buffered : {false, true}) {
     for (auto clamp : {false, true}) {
       for (auto zbias : {false, true}) {
-	for (auto full_range : {false, true}) {
-	  tests_[MakeTestName(w_buffered, clamp, zbias, full_range)] =
-	    [this, w_buffered, clamp, zbias, full_range]() { this->Test(w_buffered, clamp, zbias, full_range); };
-	}
+        for (auto full_range : {false, true}) {
+          for (auto vsh : {false, true}) {
+            tests_[MakeTestName(w_buffered, clamp, zbias, full_range, vsh)] =
+              [this, w_buffered, clamp, zbias, full_range, vsh]() { this->Test(w_buffered, clamp, zbias, full_range, vsh); };
+          }
+        }
       }
     }
   }
@@ -38,7 +42,7 @@ DepthClampTests::DepthClampTests(TestHost &host, std::string output_dir) : TestS
   for (auto w_buffered : {false, true}) {
     for (auto ofs : {0.685f, 0.822f, 3.015f, 3.216f}) {
       tests_[MakeEqualDepthTestName(w_buffered, ofs)] =
-	[this, w_buffered, ofs]() { this->TestEqualDepth(w_buffered, ofs); };
+        [this, w_buffered, ofs]() { this->TestEqualDepth(w_buffered, ofs); };
     }
   }
 }
@@ -51,10 +55,25 @@ void DepthClampTests::Deinitialize() {
   TestSuite::Deinitialize();
 }
 
-void DepthClampTests::Test(bool w_buffered, bool clamp, bool zbias, bool full_range) {
+void DepthClampTests::Test(bool w_buffered, bool clamp, bool zbias, bool full_range, bool vsh) {
   host_.SetSurfaceFormat(TestHost::SCF_A8R8G8B8, TestHost::SZF_Z24S8, host_.GetFramebufferWidth(),
                          host_.GetFramebufferHeight());
-  host_.SetVertexShaderProgram(nullptr);
+
+  if (vsh) {
+    float depth_buffer_max_value = host_.GetMaxDepthBufferValue();
+    auto shader = std::make_shared<PerspectiveVertexShader>(host_.GetFramebufferWidth(), host_.GetFramebufferHeight(),
+                                                            0.0f, depth_buffer_max_value, M_PI * 0.25f, 1.0f, 200.0f);
+    shader->SetLightingEnabled(false);
+    shader->SetUseD3DStyleViewport();
+    vector_t camera_position = {0.0f, 0.0f, -7.0f, 1.0f};
+    vector_t camera_look_at = {0.0f, 0.0f, 0.0f, 1.0f};
+    shader->LookAt(camera_position, camera_look_at);
+
+    host_.SetVertexShaderProgram(shader);
+  } else {
+    host_.SetVertexShaderProgram(nullptr);
+  }
+
   host_.SetXDKDefaultViewportAndFixedFunctionMatrices();
   host_.PrepareDraw(0xFE251135);
 
@@ -132,9 +151,9 @@ void DepthClampTests::Test(bool w_buffered, bool clamp, bool zbias, bool full_ra
   {
     auto p = pb_begin();
     p = pb_push1(p, NV097_SET_ZMIN_MAX_CONTROL, clamp ? NV097_SET_ZMIN_MAX_CONTROL_ZCLAMP_EN_CLAMP :
-		 NV097_SET_ZMIN_MAX_CONTROL_ZCLAMP_EN_CULL);
+                 NV097_SET_ZMIN_MAX_CONTROL_ZCLAMP_EN_CULL);
     p = pb_push1f(p, NV097_SET_CLIP_MIN, full_range ? 0.0f : (w_buffered ? 9.01f : 14988020.0f));
-    p = pb_push1f(p, NV097_SET_CLIP_MAX, full_range ? 16777215.0f : (w_buffered ? 16.49f : 15869665.0f));
+    p = pb_push1f(p, NV097_SET_CLIP_MAX, full_range ? 16777215.0f : (w_buffered ? 16.49f : 15869663.0f));
     if (zbias) {
       p = pb_push1f(p, NV097_SET_POLYGON_OFFSET_BIAS, zbias_value);
       p = pb_push1(p, NV097_SET_POLY_OFFSET_FILL_ENABLE, 1);
@@ -162,10 +181,11 @@ void DepthClampTests::Test(bool w_buffered, bool clamp, bool zbias, bool full_ra
   pb_print("Clamp: %d\n", clamp);
   pb_print("ZBias: %.1f\n", zbias_value);
   pb_print("FullR: %d\n", full_range);
+  pb_print("VSH: %d\n", vsh);
   pb_draw_text_screen();
 
   host_.FinishDraw(allow_saving_, output_dir_,
-		   MakeTestName(w_buffered, clamp, zbias, full_range));
+                   MakeTestName(w_buffered, clamp, zbias, full_range, vsh));
 
   host_.SetTextureStageEnabled(0, false);
   host_.SetShaderStageProgram(TestHost::STAGE_NONE);
@@ -284,5 +304,5 @@ void DepthClampTests::TestEqualDepth(bool w_buffered, float ofs) {
   pb_draw_text_screen();
 
   host_.FinishDraw(allow_saving_, output_dir_,
-		   MakeEqualDepthTestName(w_buffered, ofs));
+                   MakeEqualDepthTestName(w_buffered, ofs));
 }
