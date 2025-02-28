@@ -90,6 +90,7 @@
 #include "tests/vertex_shader_swizzle_tests.h"
 #include "tests/viewport_tests.h"
 #include "tests/volume_texture_tests.h"
+#include "tests/wbuf_tests.h"
 #include "tests/w_param_tests.h"
 #include "tests/window_clip_tests.h"
 #include "tests/z_min_max_control_tests.h"
@@ -703,6 +704,10 @@ static void register_suites(TestHost& host, std::vector<std::shared_ptr<TestSuit
   }
   {
     auto suite = std::make_shared<VolumeTextureTests>(host, output_directory);
+    test_suites.push_back(suite);
+  }
+  {
+    auto suite = std::make_shared<WBufTests>(host, output_directory);
     test_suites.push_back(suite);
   }
   {

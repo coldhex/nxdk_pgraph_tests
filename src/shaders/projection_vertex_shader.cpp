@@ -68,27 +68,29 @@ void ProjectionVertexShader::LookTo(const vector_t &camera_position, const vecto
   vector_t x_axis{0.0f, 0.0f, 0.0f, 1.0f};
   VectorNormalize(x_axis_work, x_axis);
 
-  vector_t y_axis;
-  y_axis[3] = 1.0f;
-  VectorCrossVector(z_axis, x_axis_work, y_axis);
+  vector_t y_axis_work;
+  y_axis_work[3] = 1.0f;
+  VectorCrossVector(z_axis, x_axis, y_axis_work);
+  vector_t y_axis{0.0f, 0.0f, 0.0f, 1.0f};
+  VectorNormalize(y_axis_work, y_axis);
 
   memset(view_matrix_, 0, sizeof(view_matrix_));
-  view_matrix_[0][0] = x_axis_work[0];
+  view_matrix_[0][0] = x_axis[0];
   view_matrix_[0][1] = y_axis[0];
   view_matrix_[0][2] = z_axis[0];
   view_matrix_[0][3] = 0.0f;
 
-  view_matrix_[1][0] = x_axis_work[1];
+  view_matrix_[1][0] = x_axis[1];
   view_matrix_[1][1] = y_axis[1];
   view_matrix_[1][2] = z_axis[1];
   view_matrix_[1][3] = 0.0f;
 
-  view_matrix_[2][0] = x_axis_work[2];
+  view_matrix_[2][0] = x_axis[2];
   view_matrix_[2][1] = y_axis[2];
   view_matrix_[2][2] = z_axis[2];
   view_matrix_[2][3] = 0.0f;
 
-  view_matrix_[3][0] = -VectorDotVector(x_axis_work, camera_position);
+  view_matrix_[3][0] = -VectorDotVector(x_axis, camera_position);
   view_matrix_[3][1] = -VectorDotVector(y_axis, camera_position);
   view_matrix_[3][2] = -VectorDotVector(z_axis, camera_position);
   view_matrix_[3][3] = 1.0f;

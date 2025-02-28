@@ -378,6 +378,8 @@ add_executable(
         src/tests/viewport_tests.h
         src/tests/volume_texture_tests.cpp
         src/tests/volume_texture_tests.h
+        src/tests/wbuf_tests.cpp
+        src/tests/wbuf_tests.h
         src/tests/w_param_tests.cpp
         src/tests/w_param_tests.h
         src/tests/window_clip_tests.cpp
