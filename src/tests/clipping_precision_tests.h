@@ -15,8 +15,14 @@ class ClippingPrecisionTests : public TestSuite {
  private:
   void TestClippingPrecisionFrame(float ofs,
                                   bool perspective_corrected,
+                                  bool flat,
+                                  float rotate_angle,
+                                  int vertex_cycle,
                                   bool done);
-  void TestClippingPrecision(bool perspective_corrected);
+  void TestClippingPrecision(bool perspective_corrected,
+                             bool flat,
+                             float rotate_angle,
+                             int vertex_cycle);
 };
 
 #endif  // NXDK_PGRAPH_TESTS_CLIPPING_PRECISION_TESTS_H
