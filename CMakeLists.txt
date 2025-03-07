@@ -147,6 +147,7 @@ generate_nv2a_vshinc_files(
         src/shaders/fog_vec4_zw.vsh
         src/shaders/fog_vec4_unset.vsh
         src/shaders/passthrough.vsh
+        src/shaders/rcc_clamp_test.vsh
 )
 
 generate_pixelshader_inl_files(

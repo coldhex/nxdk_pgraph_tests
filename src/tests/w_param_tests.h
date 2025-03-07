@@ -26,6 +26,7 @@ class WParamTests : public TestSuite {
   void TestFixedFunctionZeroW(bool draw_quad);
   void TestFixedFunctionZeroInfW(bool draw_quad, float w_multiplier);
   void TestProgZeroInfW(bool draw_quad, float w_multiplier);
+  void TestRccZeroInfW(float w_multiplier);
 
  private:
   std::shared_ptr<VertexBuffer> triangle_strip_;
