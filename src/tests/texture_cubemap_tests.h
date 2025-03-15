@@ -19,7 +19,7 @@ class TextureCubemapTests : public TestSuite {
   void Initialize() override;
 
  private:
-  void TestCubemap();
+  void TestCubemap(float q_coord);
   void TestDotSTRCubemap(const std::string &name, uint32_t dot_rgb_mapping);
   void TestDotReflectSpec(const std::string &name, uint32_t dot_rgb_mapping, const vector_t &eye_vec, bool const_eye);
 };
