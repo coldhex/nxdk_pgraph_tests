@@ -23,6 +23,7 @@ static constexpr uint32_t kProvokingVertex[] = {
 static constexpr const char kFixedUntextured[] = "Fixed";
 static constexpr const char kFixedTextured[] = "FixedTex";
 static constexpr const char kUntextured[] = "Prog";
+static constexpr const char kUntexturedLM[] = "ProgLM";
 static constexpr const char kTextured[] = "ProgTex";
 
 static constexpr TestHost::DrawPrimitive kPrimitives[] = {
@@ -101,6 +102,12 @@ ShadeModelTests::ShadeModelTests(TestHost& host, std::string output_dir)
           std::string name = MakeTestName(kTextured, model, provoking_vertex, primitive);
           tests_[name] = [this, model, provoking_vertex, primitive]() {
             this->TestShadeModel(model, provoking_vertex, primitive, true);
+          };
+        }
+        {
+          std::string name = MakeTestName(kUntexturedLM, model, provoking_vertex, primitive);
+          tests_[name] = [this, model, provoking_vertex, primitive]() {
+            this->TestShadeModel(model, provoking_vertex, primitive, false, true);
           };
         }
       }
@@ -377,12 +384,16 @@ static void SetShader(TestHost& host_) {
 }
 
 void ShadeModelTests::TestShadeModel(uint32_t model, uint32_t provoking_vertex, TestHost::DrawPrimitive primitive,
-                                     bool texture) {
+                                     bool texture, bool line_mode) {
   SetShader(host_);
 
-  std::string name = MakeTestName(texture ? kTextured : kUntextured, model, provoking_vertex, primitive);
+  std::string name = MakeTestName(line_mode ? kUntexturedLM : (texture ? kTextured : kUntextured),
+                                  model, provoking_vertex, primitive);
   static constexpr uint32_t kBackgroundColor = 0xFF2C302E;
-  host_.PrepareDraw(kBackgroundColor);
+  host_.SetSurfaceFormat(host_.GetColorBufferFormat(),
+                         static_cast<TestHost::SurfaceZetaFormat>(NV097_SET_SURFACE_FORMAT_ZETA_Z24S8),
+                         host_.GetFramebufferWidth(), host_.GetFramebufferHeight());
+  host_.PrepareDraw(kBackgroundColor, 0xFFFFFF, 0x80);
 
   auto p = pb_begin();
   p = pb_push1(p, NV097_SET_LIGHTING_ENABLE, false);
@@ -390,6 +401,27 @@ void ShadeModelTests::TestShadeModel(uint32_t model, uint32_t provoking_vertex, 
   p = pb_push1(p, NV097_SET_SHADE_MODEL, model);
   p = pb_push1(p, NV097_SET_FLAT_SHADE_PROVOKING_VERTEX, provoking_vertex);
   p = pb_push1(p, NV097_SET_LIGHT_CONTROL, 0x10001);
+  if (line_mode) {
+    p = pb_push1(p, NV097_SET_FRONT_POLYGON_MODE, NV097_SET_FRONT_POLYGON_MODE_V_LINE);
+    p = pb_push1(p, NV097_SET_BACK_POLYGON_MODE, NV097_SET_FRONT_POLYGON_MODE_V_LINE);
+  } else {
+    p = pb_push1(p, NV097_SET_FRONT_POLYGON_MODE, NV097_SET_FRONT_POLYGON_MODE_V_FILL);
+    p = pb_push1(p, NV097_SET_BACK_POLYGON_MODE, NV097_SET_FRONT_POLYGON_MODE_V_FILL);
+  }
+
+  /*
+  {
+    p = pb_push1(p, NV097_SET_STENCIL_TEST_ENABLE, true);
+    p = pb_push1(p, NV097_SET_STENCIL_MASK, 0xFF);
+    p = pb_push1(p, NV097_SET_STENCIL_FUNC, 0x207);
+    p = pb_push1(p, NV097_SET_STENCIL_FUNC_REF, 0);
+    p = pb_push1(p, NV097_SET_STENCIL_FUNC_MASK, 0xFF);
+    p = pb_push1(p, NV097_SET_STENCIL_OP_FAIL, NV097_SET_STENCIL_OP_V_KEEP);
+    p = pb_push1(p, NV097_SET_STENCIL_OP_ZFAIL, NV097_SET_STENCIL_OP_V_KEEP);
+    p = pb_push1(p, NV097_SET_STENCIL_OP_ZPASS, 0x8507);
+  }
+  */
+
   pb_end(p);
 
   if (texture) {
@@ -415,6 +447,7 @@ void ShadeModelTests::TestShadeModel(uint32_t model, uint32_t provoking_vertex, 
   pb_print("%s\n", name.c_str());
   pb_draw_text_screen();
   host_.FinishDraw(allow_saving_, output_dir_, name);
+  //host_.FinishDraw(allow_saving_, output_dir_, name, name + ".zbuf");
 }
 
 void ShadeModelTests::TestShadeModelFixed_W(uint32_t model, uint32_t provoking_vertex,
